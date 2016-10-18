@@ -1,0 +1,148 @@
+commit;
+drop table docs_categories;
+drop table docs_entities;
+
+CREATE TABLE documents_meta(
+document_id int PRIMARY KEY,
+source_id int,
+publisher_id int,
+publish_time datetime
+);
+
+LOAD DATA LOCAL INFILE '/Users/chemalizano/Desktop/documents_meta.csv'
+INTO TABLE documents_meta
+FIELDS TERMINATED BY ','
+    ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(document_id, source_id, publisher_id, publish_time);
+
+
+
+CREATE TABLE documents_topics(
+document_id int ,
+topic_id int,
+confidence_level float,
+PRIMARY KEY(document_id,topic_id),
+FOREIGN KEY (document_id) REFERENCES documents_meta(document_id)
+);
+
+LOAD DATA LOCAL INFILE '/Users/chemalizano/Desktop/documents_topics.csv'
+INTO TABLE documents_topics
+FIELDS TERMINATED BY ','
+    ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(document_id, topic_id, confidence_level);
+
+
+
+CREATE TABLE documents_categories(
+document_id int ,
+category_id int,
+confidence_level float,
+PRIMARY KEY(document_id,category_id),
+FOREIGN KEY (document_id) REFERENCES documents_meta(document_id)
+);
+
+LOAD DATA LOCAL INFILE '/Users/chemalizano/Desktop/documents_categories.csv'
+INTO TABLE documents_categories
+FIELDS TERMINATED BY ','
+    ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(document_id, category_id, confidence_level);
+
+
+
+
+CREATE TABLE documents_entities(
+document_id int ,
+entity_id varchar(50),
+confidence_level float,
+PRIMARY KEY(document_id,entity_id),
+FOREIGN KEY (document_id) REFERENCES documents_meta(document_id)
+);
+
+LOAD DATA LOCAL INFILE '/Users/chemalizano/Desktop/documents_entities.csv'
+INTO TABLE documents_entities
+FIELDS TERMINATED BY ','
+    ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(document_id, entity_id, confidence_level);
+
+
+
+CREATE TABLE promoted_content(
+ad_id int PRIMARY KEY,
+document_id int,
+campaign_id int,
+advertiser_id int,
+FOREIGN KEY (document_id) REFERENCES documents_meta(document_id)
+);
+
+LOAD DATA LOCAL INFILE '/Users/chemalizano/Desktop/promoted_content.csv'
+INTO TABLE promoted_content
+FIELDS TERMINATED BY ','
+    ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(ad_id, document_id, campaign_id, advertiser_id);
+
+
+
+CREATE TABLE events(
+display_id int PRIMARY KEY,
+uuid varchar(20),
+document_id int,
+timestamp int,
+platform int,
+geolocation varchar(20),
+FOREIGN KEY (document_id) REFERENCES documents_meta(document_id)
+);
+
+LOAD DATA LOCAL INFILE '/Users/chemalizano/Desktop/events.csv'
+INTO TABLE events
+FIELDS TERMINATED BY ','
+    ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(display_id, uuid, document_id, timestamp, platform,geolocation );
+
+
+
+CREATE TABLE train_clicks(
+display_id int ,
+ad_id int,
+clicked int,
+PRIMARY KEY(display_id,ad_id),
+FOREIGN KEY (display_id) REFERENCES events(display_id),
+FOREIGN KEY (ad_id) REFERENCES promoted_content(ad_id)
+);
+
+LOAD DATA LOCAL INFILE '/Users/chemalizano/Desktop/clicks_train.csv'
+INTO TABLE train_clicks
+FIELDS TERMINATED BY ','
+    ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(display_id, ad_id, clicked);
+
+
+
+CREATE TABLE test_clicks(
+display_id int ,
+ad_id int,
+PRIMARY KEY(display_id,ad_id),
+FOREIGN KEY (display_id) REFERENCES events(display_id),
+FOREIGN KEY (ad_id) REFERENCES promoted_content(ad_id)
+);
+
+LOAD DATA LOCAL INFILE '/Users/chemalizano/Desktop/clicks_test.csv'
+INTO TABLE test_clicks
+FIELDS TERMINATED BY ','
+    ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(display_id, ad_id);
